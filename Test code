@@ -1,0 +1,20 @@
+from project import checkCollision, constant_permeability, falling_permeability
+import pytest
+
+def main():
+    test_checkCollision()
+    test_constant_permeability()
+    test_falling_permeability()
+
+def test_checkCollision():
+    assert checkCollision(1,1) == "Incipient of Failure"
+    assert checkCollision(2,1) == "Does not exist, not stable"
+
+def test_constant_permeability():
+    assert constant_permeability(10,10,10,10,10,) == 0.1
+
+def test_falling_permeability():
+    assert falling_permeability(10,10,5,10,10,10) == 0.6931472
+
+if __name__ == "__main__":
+    main()
