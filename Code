@@ -1,0 +1,133 @@
+from matplotlib import pyplot as plt, patches
+import sys
+import math
+import numpy as np
+import matplotlib.lines as lines
+from numpy import *
+
+def main():
+    options = "Options: \n1 - Find Mohr Equation \n2 - Determine stability \n3 - Determine shear failure \n4 - Determine constant head permeability \n5 - Determine falling head permeability"
+
+    print(options)
+    select = int(input("Select: "))
+    if select == 1: 
+        sigma1 = float(input("sigma1: "))
+        sigma3 = float(input("sigma3: "))
+        radius = float((sigma1 - sigma3)/2)
+        centre = radius + sigma3
+        cohesion = float(input("cohesion: "))
+
+        if radius < 0:
+            sys.exit("Invalid radius")
+
+        if cohesion == 0:
+            phi = math.asin((2*radius/(sigma1 + sigma3)))
+
+
+            #tau = sigma * tan(phi)
+            sigma_failure = (sigma1 + sigma3)/2 - radius*(math.sin(phi))
+            tau_failure = sigma_failure * math.tan(phi)
+            
+
+            print("Mohr equation: ")
+            print("y = tan("+str(round(math.degrees(phi),2))+") x + 0")
+            print("tau = "+str(tau_failure)+", sigma = "+str(sigma_failure))
+            plot_graph(sigma1, phi, cohesion, centre, radius)
+
+        elif cohesion != 0:
+            a = math.sqrt((sigma1 + sigma3)**2 + 4*cohesion*cohesion)
+            phi = math.asin((2*radius/a)) -math.atan(2*cohesion/(sigma1 + sigma3))
+            
+            #tau = sigma*tan(phi) + c
+            sigma_failure = centre - radius*math.sin(phi)
+            tau_failure = math.cos(phi)*radius
+            print("Mohr equation: ")
+            print("y = tan("+str(round(math.degrees(phi),2))+") x + "+ str(cohesion))
+            print("tau = "+str(tau_failure)+", sigma = "+str(sigma_failure))
+            plot_graph(sigma1, phi, cohesion, centre, radius)
+
+    if select == 2:
+        phi = math.radians(float(input("angle (in degrees): ")))
+        cohesion = float(input("cohesion: "))
+        sigma1 = float(input("sigma1: "))
+        sigma3 = float(input("sigma3: "))
+        radius = float((sigma1 - sigma3)/2)
+        centre = radius + sigma3
+
+        # eqn of normal: y = -cot(phi)x + centre cot(phi)
+        cot = 1/(math.tan(phi))
+        x = (cot*centre - cohesion) / (math.tan(phi) + cot)
+        y = -cot*x + centre*cot
+
+        # coords (centre,0) and (x,y), distance = sqrt((centre-x)^2 + y^2)
+        dist = math.sqrt((centre - x)**2 + y**2)
+        print(checkCollision(radius,dist))
+        plot_graph(sigma1, phi, cohesion, centre, radius)
+
+        
+    if select == 3:
+        shear1 = float(input("Value of shear: "))
+        stress1 = float(input("Value of normal stress 1: " ))
+        stress2 = float(input("Value of normal stress 2: "))
+        cohesion = float(input("Cohesion: "))
+
+        # Y = mX + c
+        m = (shear1 - cohesion) / stress1
+        shear2 = m*stress2 + cohesion
+        print("Shear failure at stress 2 = " + str(shear2))
+
+    if select == 4:
+        v = float(input("Volume: "))
+        l = float(input("Length of soil: "))
+        h = float(input("Pressure head: "))
+        a = float(input("Cross-sectional area: "))
+        t = float(input("Time: "))
+        print("Permerability: "+str(constant_permeability(v, l, h, a, t))+"cm/s")
+
+    if select == 5:
+        l = float(input("Length of soil: "))
+        h1 = float(input("Initial head: "))
+        h2 = float(input("Final head: "))
+        a1 = float(input("Cross-sectional area (soil): "))
+        a2 = float(input("Area of water tube: "))
+        t = float(input("Time: "))
+        print("Permerability: "+str(falling_permeability(l, h1, h2, a1, a2, t))+"cm/s")
+
+def checkCollision(radius,dist):
+    if radius == dist:
+        return "Incipient of Failure"
+    elif radius > dist:
+        return "Does not exist, not stable"
+    else:
+        return "Stable"
+
+
+
+def plot_graph(sigma1, phi, cohesion, centre, radius):
+    
+    x = np.array(range(int(2*sigma1)))
+    y = x*math.tan(phi) + cohesion
+        
+        # y = sqrt(radius**2-(x-centre)**2) 
+    plt.rcParams["figure.figsize"] = [7.00, 3.50]
+    plt.rcParams["figure.autolayout"] = True
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    
+    circle1 = patches.Circle((centre, 0), radius=radius, fill = False)
+    ax.add_patch(circle1)
+    ax.axis('equal')
+    plt.title("Mohr Criterion")
+    plt.plot(x,y)
+    plt.show()
+
+def constant_permeability(v, l, h, a, t):
+    k = v*l/(h*a*t)
+    return k
+
+def falling_permeability(l, h1, h2, a1, a2, t):
+    k = round(math.log(h1/h2)*a2*l/(a1*t),7)
+    return k
+
+if __name__ == "__main__":
+    main()
